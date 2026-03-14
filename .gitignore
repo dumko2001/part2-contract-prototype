@@ -3,6 +3,7 @@
 __pycache__/
 *.pyc
 .DS_Store
-artifacts/*.xlsx
-artifacts/*.json
-!artifacts/.gitkeep
+outputs/*.xlsx
+reports/*.json
+!outputs/.gitkeep
+!reports/.gitkeep

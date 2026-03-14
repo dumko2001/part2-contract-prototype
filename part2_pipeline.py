@@ -710,22 +710,22 @@ def main() -> int:
     )
     parser.add_argument(
         "--file1",
-        default=str(base_dir / "[FILE 1]_ subset of registration status.xlsx"),
+        default=str(base_dir / "inputs/[FILE 1]_ subset of registration status.xlsx"),
         help="Input Excel file (File 1)",
     )
     parser.add_argument(
         "--file2",
-        default=str(base_dir / "FILE 2 subset.pdf"),
+        default=str(base_dir / "inputs/FILE 2 subset.pdf"),
         help="Input PDF file (File 2)",
     )
     parser.add_argument(
         "--output",
-        default=str(base_dir / "artifacts/FILE_3_GENERATED.xlsx"),
+        default=str(base_dir / "outputs/FILE_3_GENERATED.xlsx"),
         help="Output Excel path",
     )
     parser.add_argument(
         "--report",
-        default=str(base_dir / "artifacts/part2_run_report.json"),
+        default=str(base_dir / "reports/part2_run_report.json"),
         help="Run report path",
     )
     parser.add_argument(

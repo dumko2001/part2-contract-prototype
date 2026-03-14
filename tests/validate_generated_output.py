@@ -28,10 +28,10 @@ def norm(v):
 
 
 def main() -> int:
-    base_dir = Path(__file__).resolve().parent
+    base_dir = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser()
-    parser.add_argument("--expected", default=str(base_dir / "FILE 3 OUTPUT.xlsx"))
-    parser.add_argument("--actual", default=str(base_dir / "artifacts/FILE_3_GENERATED.xlsx"))
+    parser.add_argument("--expected", default=str(base_dir / "inputs/FILE 3 OUTPUT.xlsx"))
+    parser.add_argument("--actual", default=str(base_dir / "outputs/FILE_3_GENERATED.xlsx"))
     args = parser.parse_args()
 
     exp = [tuple(norm(x) for x in r) for r in read_rows(Path(args.expected))]

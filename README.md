@@ -3,17 +3,18 @@
 This folder now includes an end-to-end **Part 2** prototype:
 
 - `part2_pipeline.py`: Excel + PDF -> generated output Excel
-- `artifacts/part2_run_report.json`: parse and reliability report
-- `artifacts/FILE_3_GENERATED.xlsx`: generated file in File 3 shape
-- `synthetic_tests.py`: synthetic edge-case tests for lane switching
+- `reports/part2_run_report.json`: parse and reliability report
+- `outputs/FILE_3_GENERATED.xlsx`: generated file in File 3 shape
+- `tests/synthetic_tests.py`: synthetic edge-case tests for lane switching
+- `tests/validate_generated_output.py`: validator against expected File 3
 
 ## Required input files
 
-These files are included in this folder by default:
+These files are included in `inputs/` by default:
 
-- `[FILE 1]_ subset of registration status.xlsx`
-- `FILE 2 subset.pdf`
-- `FILE 3 OUTPUT.xlsx` (used by validator)
+- `inputs/[FILE 1]_ subset of registration status.xlsx`
+- `inputs/FILE 2 subset.pdf`
+- `inputs/FILE 3 OUTPUT.xlsx` (used by validator)
 
 You can still pass custom locations via CLI flags.
 
@@ -24,8 +25,8 @@ cd "/Users/sidharth/Downloads/Map for case study/part2_prototype"
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python part2_pipeline.py
-.venv/bin/python validate_generated_output.py
-.venv/bin/python synthetic_tests.py
+.venv/bin/python tests/validate_generated_output.py
+.venv/bin/python tests/synthetic_tests.py
 ```
 
 ## Run with custom file paths
