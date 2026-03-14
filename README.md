@@ -46,6 +46,11 @@ cp .env.example .env
 # edit .env and set GROQ_API_KEY
 ```
 
+Notes:
+- `.env` is loaded automatically by `part2_pipeline.py`.
+- `.env` is ignored by git and is never committed.
+- Do not hardcode API keys in source code.
+
 Optional Groq fallback (Lane B):
 
 1. Copy `.env.example` to `.env`

@@ -201,10 +201,13 @@ def extract_instruction_blocks(pdf_text: str) -> Dict[str, dict]:
         instruction_raw = block_text[ins_start.end() :]
         instruction = re.sub(r"\s+", " ", instruction_raw).strip()
         block_hash = hashlib.sha256(block_text.encode("utf-8")).hexdigest()[:16]
+        qty_match = re.search(r"\b(\d{1,3}(?:\.\d{3})*,\d{2})\s+F\b", block_text)
+        pdf_quantity = _parse_eu_number_to_float(qty_match.group(1)) if qty_match else None
         result[code] = {
             "instruction": instruction,
             "page": first_page,
             "block_hash": block_hash,
+            "pdf_quantity": pdf_quantity,
             "has_action_signal": bool(
                 re.search(r"\b(reus|dispos|clean|packag|transport)\b|\d+(?:\.\d+)?\s*%", instruction, flags=re.IGNORECASE)
             ),
@@ -217,6 +220,17 @@ def _find_pct(pattern: str, text: str) -> Optional[float]:
     if not m:
         return None
     return float(m.group(1))
+
+
+def _parse_eu_number_to_float(value: str) -> Optional[float]:
+    s = value.strip()
+    if not s:
+        return None
+    s = s.replace(".", "").replace(",", ".")
+    try:
+        return float(s)
+    except ValueError:
+        return None
 
 
 def deterministic_parse(item_code: str, instruction: str) -> ParseResult:
@@ -251,6 +265,12 @@ def deterministic_parse(item_code: str, instruction: str) -> ParseResult:
     if rem is not None:
         dispose.pct = rem
         notes.append("dispose_remaining")
+    elif "remaining" in text and "dispos" in text and reuse.pct > 0 and dispose.pct <= EPS:
+        dispose.pct = max(0.0, 100.0 - reuse.pct)
+        notes.append("dispose_remaining_complement")
+    elif "remaining" in text and "reus" in text and dispose.pct > 0 and reuse.pct <= EPS:
+        reuse.pct = max(0.0, 100.0 - dispose.pct)
+        notes.append("reuse_remaining_complement")
 
     if re.search(r"fully\s*\(?100%\)?\s*clean|100%[^.]*clean", text):
         clean.pct = 100.0
@@ -517,6 +537,16 @@ def process(
             errors.append({"item_code": code, "error": "instruction_not_found"})
             continue
         instruction = instruction_meta["instruction"]
+        pdf_qty = instruction_meta.get("pdf_quantity")
+        if isinstance(pdf_qty, (int, float)) and abs(float(pdf_qty) - child.quantity) > 0.01:
+            errors.append(
+                {
+                    "item_code": code,
+                    "error": "quantity_mismatch_pdf_vs_file1",
+                    "file1_quantity": child.quantity,
+                    "pdf_quantity": float(pdf_qty),
+                }
+            )
         parsed = deterministic_parse(code, instruction)
         lane_b_reason = decide_lane_b_reason(parsed)
         use_lane_b = force_lane_b or (lane_b_reason is not None)
@@ -646,6 +676,19 @@ def process(
         qty_children = sum(children[c].quantity for c in row["children"])
         if abs(qty_children - row["quantity"]) > EPS:
             validation_issues.append({"item_code": parent, "type": "parent_quantity_mismatch"})
+        parent_unit = str(row["unit"] or "").strip()
+        if parent_unit:
+            for c in row["children"]:
+                child_unit = str(children[c].unit or "").strip()
+                if child_unit and child_unit != parent_unit:
+                    validation_issues.append(
+                        {
+                            "item_code": c,
+                            "type": "unit_mismatch_parent_child",
+                            "parent_unit": parent_unit,
+                            "child_unit": child_unit,
+                        }
+                    )
 
     output_xlsx.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output_xlsx)
@@ -685,6 +728,7 @@ def process(
             k: {
                 "page": v.get("page"),
                 "block_hash": v.get("block_hash"),
+                "pdf_quantity": v.get("pdf_quantity"),
                 "has_action_signal": v.get("has_action_signal"),
             }
             for k, v in instructions.items()
